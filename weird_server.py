@@ -1,7 +1,6 @@
 import random
 import time
 import os
-import csv
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,7 +18,7 @@ gong_rng_probabilities = [0.000001, 0.000002, 0.000002, 0.000005, 0.00004, 0.000
 @app.function(
     min_containers=1,
     allow_concurrent_inputs=1000,
-    volumes={"root/gongrng": gong_rng_volume}
+    volumes={"/gongrng": gong_rng_volume}
 )
 @modal.asgi_app()
 def fastapi_app():    
@@ -35,7 +34,7 @@ def fastapi_app():
     )
 
     # create things if it doesn't exist
-    os.makedirs("root/gongrng/clientdata/", exist_ok=True)
+    os.makedirs("/gongrng/clientdata/", exist_ok=True)
     
     @web_app.post("/")
     def roll(req: Request):
@@ -66,11 +65,11 @@ def fastapi_app():
                 samesite="none",
             )
             # create file
-            with open("root/gongrng/clientdata/" + session_key, "w") as f:
+            with open("/gongrng/clientdata/" + session_key, "w") as f:
                 f.write("0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0")
 
         # add result to storage
-        with open("/root/gongrng/clientdata/" + session_key, "r+") as f:
+        with open("/gongrng/clientdata/" + session_key, "r+") as f:
             addResultToData(f, result)
 
         return response
@@ -92,7 +91,7 @@ def fastapi_app():
         if (session_key == None):
             return False
         # check if file exists
-        return os.path.exists("root/gongrng/clientdata/" + session_key)
+        return os.path.exists("/gongrng/clientdata/" + session_key)
 
     def addResultToData(client_file, roll_result):
         raw_file_data = client_file.read()
