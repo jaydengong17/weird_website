@@ -16,7 +16,8 @@ gong_rng_probabilities = [0.000001, 0.000002, 0.000002, 0.000005, 0.00004, 0.000
 
 
 @app.function(
-    min_containers=1,
+    min_containers=0,
+    max_containers=1,
     allow_concurrent_inputs=1000,
     volumes={"/gongrng": gong_rng_volume}
 )
@@ -51,8 +52,6 @@ def fastapi_app():
         # cookies
         session_key = req.cookies.get("session_key", None)
 
-        gong_rng_volume.reload()
-
         # if cookie doesn't exist yet or not in file (new client)
         if not checkKeyDataExists(session_key):
             # length 32 string, hopefully no collisions
@@ -73,8 +72,6 @@ def fastapi_app():
         # add result to storage
         with open("/gongrng/clientdata/" + session_key, "r+") as f:
             addResultToData(f, result)
-
-        gong_rng_volume.commit()
 
         return response
     
