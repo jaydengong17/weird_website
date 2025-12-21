@@ -38,7 +38,7 @@ def fastapi_app():
     # create things if it doesn't exist
     os.makedirs("/gongrng/clientdata/", exist_ok=True)
     
-    @web_app.post("/")
+    @web_app.post("/gongrng/roll")
     def roll(req: Request):
         # ----handle creation of things for incoming request----
 
@@ -65,7 +65,9 @@ def fastapi_app():
 
         # add result to storage
         with open("/gongrng/clientdata/" + session_key, "r+") as f:
-            addResultToData(f, result)
+            success = addResultToData(f, result)
+            if (success):
+                result = -1
 
         # ----make response----
 
