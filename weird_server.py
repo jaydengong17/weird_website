@@ -70,7 +70,7 @@ def fastapi_app():
                 value=session_key,
                 httponly=False,
                 secure=True,
-                domain="jaydengong17--weird-website-fastapi-app-dev.modal.run",
+                domain="jaydengong17--weird-website-fastapi-app.modal.run",
                 samesite="none",
             )
         
