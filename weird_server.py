@@ -47,7 +47,7 @@ def fastapi_app():
         # if cookie doesn't exist yet or not in file (new client)
         if not checkKeyDataExists(session_key):
             # length 32 string, hopefully no collisions
-            session_key = f"{round(time.time()):b>12}a{random.random():b<19}"
+            session_key = f"{round(time.time()):b>12}a{round(random.random() * (10 ** 19)):0>}"
             # remember to add cookie later
             set_cookie = True
             # create file
