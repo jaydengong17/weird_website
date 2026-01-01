@@ -38,11 +38,8 @@ def fastapi_app():
     # create things if it doesn't exist
     os.makedirs("/gongrng/clientdata/", exist_ok=True)
     
-    @web_app.post("/gongrng/roll")
-    def roll(req: Request):
-        # ----handle creation of things for incoming request----
-
-        # cookies
+    @web_app.post("/gongrng/sync")
+    def sync(req: Request):
         session_key = req.cookies.get("session_key", None)
 
         set_cookie = False
@@ -54,9 +51,42 @@ def fastapi_app():
             # remember to add cookie later
             set_cookie = True
             # create file
-            with open("/gongrng/clientdata/" + session_key, "w") as f:
+            with open("/gongrng/clientdata/" + session_key + ".txt", "w") as f:
                 f.write("0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0\n0")
 
+        # response string
+        with open("/gongrng/clientdata/" + session_key + ".txt", "r") as f:
+            response = JSONResponse(
+                {
+                    "things": f.readline().strip(),
+                },
+            )
+
+        # maybe add cookie to response
+        if (set_cookie):
+            print("setting cookie")
+            response.set_cookie(
+                key="session_key",
+                value=session_key,
+                httponly=False,
+                secure=True,
+                domain="jaydengong17--weird-website-fastapi-app-dev.modal.run",
+                samesite="none",
+            )
+        
+        return response
+
+    # sync will always be called before roll
+    @web_app.post("/gongrng/roll")
+    def roll(req: Request):
+        # ----handle creation of things for incoming request----
+
+        # cookies
+        session_key = req.cookies.get("session_key", None)
+
+        # random error
+        if not checkKeyDataExists(session_key):
+            return JSONResponse({"result": -1,},)
 
         # ----figure out value of response----
 
@@ -64,9 +94,9 @@ def fastapi_app():
         result = getRollRank()
 
         # add result to storage
-        with open("/gongrng/clientdata/" + session_key, "r+") as f:
+        with open("/gongrng/clientdata/" + session_key + ".txt", "r+") as f:
             success = addResultToData(f, result)
-            if (success):
+            if (not success):
                 result = -1
 
         # ----make response----
@@ -77,17 +107,6 @@ def fastapi_app():
                 "result": result,
             },
         )
-
-        # maybe add cookie to response
-        if (set_cookie):
-            response.set_cookie(
-                key="session_key",
-                value=session_key,
-                httponly=False,
-                secure=True,
-                domain="jaydengong17--weird-website-fastapi-app.modal.run",
-                samesite="none",
-            )
 
         return response
     
@@ -108,7 +127,7 @@ def fastapi_app():
         if (session_key == None):
             return False
         # check if file exists
-        return os.path.exists("/gongrng/clientdata/" + session_key)
+        return os.path.exists("/gongrng/clientdata/" + session_key + ".txt")
 
     def addResultToData(client_file, roll_result):
         raw_file_data = client_file.read()
@@ -118,6 +137,7 @@ def fastapi_app():
         try:
             # cooldown
             if (float(timedata) + cooldown > time.time()):
+                print("cooldown bad")
                 return False
         except:
             print("client file is wrong, somehow. the file looks like: " + raw_file_data)
@@ -141,6 +161,7 @@ def fastapi_app():
         client_file.seek(0)
         # guaranteed to be shorter (also make everything a string so clientdata works)
         client_file.write(",".join([str(i) for i in client_data]) + f"\n{time.time():0<20}")
+        print("worked")
         return True
 
     return web_app
